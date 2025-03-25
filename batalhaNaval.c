@@ -1,112 +1,172 @@
 #include <stdio.h>
 
-    
-#include <stdio.h>
+// Constantes para tamanho do tabuleiro e habilidades
+#define TAMANHO_TABULEIRO 10
+#define TAMANHO_HABILIDADE 5
 
-#define TAMANHO 10
-#define NAVIO 3
-
-// Inicializa o tabuleiro preenchendo todas as posições com 0
-void inicializarTabuleiro(int tabuleiro[TAMANHO][TAMANHO]) {
-    for (int i = 0; i < TAMANHO; i++) {
-        for (int j = 0; j < TAMANHO; j++) {
-            tabuleiro[i][j] = 0;
+// Função para inicializar o tabuleiro com valores padrão
+int inicializarTabuleiro(int tabuleiro[TAMANHO_TABULEIRO][TAMANHO_TABULEIRO]) {
+    int linha, coluna;
+    for (linha = 0; linha < TAMANHO_TABULEIRO; linha++) {
+        for (coluna = 0; coluna < TAMANHO_TABULEIRO; coluna++) {
+            tabuleiro[linha][coluna] = 0; // Representa água
         }
     }
+    return 1; // Sucesso
 }
 
-// Exibe o tabuleiro no console
-void exibirTabuleiro(int tabuleiro[TAMANHO][TAMANHO]) {
-    for (int i = 0; i < TAMANHO; i++) {
-        for (int j = 0; j < TAMANHO; j++) {
-            printf("%d ", tabuleiro[i][j]);
+// Função para exibir o tabuleiro no console
+int exibirTabuleiro(int tabuleiro[TAMANHO_TABULEIRO][TAMANHO_TABULEIRO]) {
+    int linha, coluna;
+    for (linha = 0; linha < TAMANHO_TABULEIRO; linha++) {
+        for (coluna = 0; coluna < TAMANHO_TABULEIRO; coluna++) {
+            switch (tabuleiro[linha][coluna]) {
+                case 0:
+                    printf("~ "); // Água
+                    break;
+                case 3:
+                    printf("# "); // Navio
+                    break;
+                case 1:
+                    printf("+ "); // Cruz
+                    break;
+                case 4:
+                    printf("^ "); // Cone/Losango
+                    break;
+                default:
+                    printf("? "); // Valores inesperados
+                    break;
+            }
         }
         printf("\n");
     }
+    return 1; // Sucesso
 }
 
-// Posiciona um navio no tabuleiro com base nas entradas do usuário
-int posicionarNavio(int tabuleiro[TAMANHO][TAMANHO], int linha, int coluna, int direcao) {
-    for (int i = 0; i < NAVIO; i++) {
-        int x = linha + (direcao == 1 ? i : (direcao == 3 ? -i : 0));
-        int y = coluna + (direcao == 0 ? i : (direcao == 2 ? -i : 0));
+// Função para aplicar uma habilidade ao tabuleiro
+int aplicarHabilidade(int tabuleiro[TAMANHO_TABULEIRO][TAMANHO_TABULEIRO], int habilidade[TAMANHO_HABILIDADE][TAMANHO_HABILIDADE], int origemLinha, int origemColuna, int valor) {
+    int linha, coluna;
+    for (linha = 0; linha < TAMANHO_HABILIDADE; linha++) {
+        for (coluna = 0; coluna < TAMANHO_HABILIDADE; coluna++) {
+            // Calcula a posição no tabuleiro
+            int posicaoLinha = origemLinha - TAMANHO_HABILIDADE / 2 + linha;
+            int posicaoColuna = origemColuna - TAMANHO_HABILIDADE / 2 + coluna;
 
-        // Verifica os limites do tabuleiro
-        if (x < 0 || x >= TAMANHO || y < 0 || y >= TAMANHO || tabuleiro[x][y] != 0) {
-            return 0; // Posicionamento inválido
+            // Verifica os limites do tabuleiro
+            if (posicaoLinha >= 0 && posicaoLinha < TAMANHO_TABULEIRO && posicaoColuna >= 0 && posicaoColuna < TAMANHO_TABULEIRO && habilidade[linha][coluna] == 1) {
+                tabuleiro[posicaoLinha][posicaoColuna] = valor; // Marca como área de efeito
+            }
+        }
+    }
+    return 1; // Sucesso
+}
+
+// Função para verificar o fim do jogo
+int verificarFimDeJogo(int tabuleiro[TAMANHO_TABULEIRO][TAMANHO_TABULEIRO]) {
+    int linha, coluna;
+    int naviosRestantes = 0;
+
+    for (linha = 0; linha < TAMANHO_TABULEIRO; linha++) {
+        for (coluna = 0; coluna < TAMANHO_TABULEIRO; coluna++) {
+            if (tabuleiro[linha][coluna] == 3) { // Verifica se há navios no tabuleiro
+                naviosRestantes++;
+            }
         }
     }
 
-    // Posiciona o navio após a validação
-    for (int i = 0; i < NAVIO; i++) {
-        int x = linha + (direcao == 1 ? i : (direcao == 3 ? -i : 0));
-        int y = coluna + (direcao == 0 ? i : (direcao == 2 ? -i : 0));
-        tabuleiro[x][y] = NAVIO;
+    if (naviosRestantes == 0) {
+        return 1; // Fim de jogo: todos os navios foram destruídos
+    } else {
+        return 0; // Jogo continua: ainda existem navios
     }
-    return 1; // Posicionamento válido
 }
 
+// Função para exibir o menu de opções
+void exibirMenu() {
+    printf("\n==== Menu de Comandos ====\n");
+    printf("1 - Aplicar habilidade Cruz\n");
+    printf("2 - Aplicar habilidade Cone (Losango)\n");
+    printf("3 - Exibir tabuleiro\n");
+    printf("0 - Sair\n");
+    printf("==========================\n");
+    printf("Escolha uma opção: ");
+}
+
+// Função principal
 int main() {
-    int tabuleiro[TAMANHO][TAMANHO];
+    int tabuleiro[TAMANHO_TABULEIRO][TAMANHO_TABULEIRO];
+    int cruz[TAMANHO_HABILIDADE][TAMANHO_HABILIDADE] = {
+        {0, 0, 1, 0, 0},
+        {0, 0, 1, 0, 0},
+        {1, 1, 1, 1, 1},
+        {0, 0, 1, 0, 0},
+        {0, 0, 1, 0, 0}
+    };
+    int cone[TAMANHO_HABILIDADE][TAMANHO_HABILIDADE] = {
+        {0, 0, 1, 0, 0},
+        {0, 1, 1, 1, 0},
+        {1, 1, 1, 1, 1},
+        {0, 1, 1, 1, 0},
+        {0, 0, 1, 0, 0}
+    };
+    int opcao, origemLinha, origemColuna;
+
     inicializarTabuleiro(tabuleiro);
 
-    printf("Bem-vindo ao jogo de Batalha Naval!\n");
+    // Define um exemplo de navio
+    tabuleiro[4][5] = 3;
 
-    for (int i = 1; i <= 4; i++) {
-        int linha, coluna, direcao;
-        printf("\nPosicione o navio %d (tamanho %d):\n", i, NAVIO);
-        printf("Digite a linha inicial (0 a %d): ", TAMANHO - 1);
-        scanf("%d", &linha);
-        printf("Digite a coluna inicial (0 a %d): ", TAMANHO - 1);
-        scanf("%d", &coluna);
-        printf("Escolha a direção (0=Horizontal direita, 1=Vertical para baixo, 2=Horizontal esquerda, 3=Diagonal para cima): ");
-        scanf("%d", &direcao);
+    // Loop do menu
+    do {
+        exibirMenu();
+        scanf("%d", &opcao);
 
-        if (!posicionarNavio(tabuleiro, linha, coluna, direcao)) {
-            printf("Posicionamento inválido! Tente novamente.\n");
-            i--; // Repetir o mesmo navio
-        } else {
-            printf("Navio %d posicionado com sucesso!\n", i);
+        switch (opcao) {
+            case 1: // Aplicar habilidade Cruz
+                printf("Digite as coordenadas da origem (linha coluna): ");
+                scanf("%d %d", &origemLinha, &origemColuna);
+
+                // Verifica se a origem está dentro do tabuleiro
+                if (origemLinha >= 0 && origemLinha < TAMANHO_TABULEIRO && origemColuna >= 0 && origemColuna < TAMANHO_TABULEIRO) {
+                    aplicarHabilidade(tabuleiro, cruz, origemLinha, origemColuna, 1);
+                } else {
+                    printf("Coordenadas inválidas! Tente novamente.\n");
+                }
+                break;
+
+            case 2: // Aplicar habilidade Cone (Losango)
+                printf("Digite as coordenadas da origem (linha coluna): ");
+                scanf("%d %d", &origemLinha, &origemColuna);
+
+                // Verifica se a origem está dentro do tabuleiro
+                if (origemLinha >= 0 && origemLinha < TAMANHO_TABULEIRO && origemColuna >= 0 && origemColuna < TAMANHO_TABULEIRO) {
+                    aplicarHabilidade(tabuleiro, cone, origemLinha, origemColuna, 4);
+                } else {
+                    printf("Coordenadas inválidas! Tente novamente.\n");
+                }
+                break;
+
+            case 3: // Exibir tabuleiro
+                printf("\nTabuleiro atual:\n");
+                exibirTabuleiro(tabuleiro);
+                break;
+
+            case 0: // Sair
+                printf("Saindo do programa...\n");
+                break;
+
+            default:
+                printf("Opção inválida! Tente novamente.\n");
+                break;
         }
-    }
 
-    printf("\nTabuleiro final:\n");
-    exibirTabuleiro(tabuleiro);
+        // Verifica se o jogo terminou
+        if (verificarFimDeJogo(tabuleiro)) {
+            printf("\nFim de jogo: todos os navios foram destruídos!\n");
+            opcao = 0; // Força a saída do loop
+        }
 
-    
-
-    
-
-    // Nível Novato - Posicionamento dos Navios
-    // Sugestão: Declare uma matriz bidimensional para representar o tabuleiro (Ex: int tabuleiro[5][5];).
-    // Sugestão: Posicione dois navios no tabuleiro, um verticalmente e outro horizontalmente.
-    // Sugestão: Utilize `printf` para exibir as coordenadas de cada parte dos navios.
-
-    // Nível Aventureiro - Expansão do Tabuleiro e Posicionamento Diagonal
-    // Sugestão: Expanda o tabuleiro para uma matriz 10x10.
-    // Sugestão: Posicione quatro navios no tabuleiro, incluindo dois na diagonal.
-    // Sugestão: Exiba o tabuleiro completo no console, mostrando 0 para posições vazias e 3 para posições ocupadas.
-
-    // Nível Mestre - Habilidades Especiais com Matrizes
-    // Sugestão: Crie matrizes para representar habilidades especiais como cone, cruz, e octaedro.
-    // Sugestão: Utilize estruturas de repetição aninhadas para preencher as áreas afetadas por essas habilidades no tabuleiro.
-    // Sugestão: Exiba o tabuleiro com as áreas afetadas, utilizando 0 para áreas não afetadas e 1 para áreas atingidas.
-
-    // Exemplos de exibição das habilidades:
-    // Exemplo para habilidade em cone:
-    // 0 0 1 0 0
-    // 0 1 1 1 0
-    // 1 1 1 1 1
-    
-    // Exemplo para habilidade em octaedro:
-    // 0 0 1 0 0
-    // 0 1 1 1 0
-    // 0 0 1 0 0
-
-    // Exemplo para habilidade em cruz:
-    // 0 0 1 0 0
-    // 1 1 1 1 1
-    // 0 0 1 0 0
+    } while (opcao != 0);
 
     return 0;
 }
